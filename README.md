@@ -1,1 +1,1 @@
-# Kecerdasan-Buatan
+# KecerdasanBuatan
