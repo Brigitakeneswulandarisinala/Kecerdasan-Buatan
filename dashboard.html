@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Executive Dashboard Curah Hujan - Toraja Utara</title>
+    <!-- Tailwind CSS CDN for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js CDN for interactive charts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Inter Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased">
+
+    <!-- Header Section -->
+    <header class="bg-slate-900 text-white shadow-md">
+        <div class="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div>
+                <div class="flex items-center gap-2">
+                    <span class="bg-cyan-500 text-slate-900 text-xs font-bold px-2.5 py-1 rounded">EXECUTIVE BI</span>
+                    <span class="text-slate-400 text-sm">Data Hidrometeorologi</span>
+                </div>
+                <h1 class="text-2xl sm:text-3xl font-bold tracking-tight mt-1">Dashboard Curah Hujan Kabupaten Toraja Utara</h1>
+                <p class="text-slate-400 text-sm mt-1">Analisis Komprehensif Data Historis Curah Hujan Bulanan (Periode 2015 – 2025)</p>
+            </div>
+            <div class="text-right bg-slate-800 p-3 rounded-lg border border-slate-700">
+                <p class="text-xs text-slate-400">Rentang Data</p>
+                <p class="text-sm font-semibold text-cyan-400">Januari 2015 – Desember 2025</p>
+                <p class="text-[11px] text-slate-400 mt-0.5">Pembaruan Terakhir: 2026</p>
+            </div>
+        </div>
+    </header>
+
+    <!-- Filter & Controls Bar -->
+    <section class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 py-3 sm:px-6 lg:px-8 flex flex-wrap items-center justify-between gap-4">
+            <div class="flex flex-wrap items-center gap-3">
+                <div class="flex items-center gap-2">
+                    <label for="yearFilter" class="text-xs font-semibold uppercase tracking-wider text-slate-500">Tahun:</label>
+                    <select id="yearFilter" onchange="updateDashboard()" class="bg-slate-100 border border-slate-300 text-slate-800 text-sm rounded-md px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-cyan-500">
+                        <option value="ALL">Semua Tahun (2015-2025)</option>
+                        <option value="2015">2015</option>
+                        <option value="2016">2016</option>
+                        <option value="2017">2017</option>
+                        <option value="2018">2018</option>
+                        <option value="2019">2019</option>
+                        <option value="2020">2020</option>
+                        <option value="2021">2021</option>
+                        <option value="2022">2022</option>
+                        <option value="2023">2023</option>
+                        <option value="2024">2024</option>
+                        <option value="2025">2025</option>
+                    </select>
+                </div>
+            </div>
+            <div>
+                <button onclick="resetFilters()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold px-3 py-2 rounded-md transition border border-slate-300">
+                    Reset Filter
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Content Container -->
+    <main class="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8 space-y-8">
+
+        <!-- KPI Cards Row -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            <!-- KPI 1 -->
+            <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 flex flex-col justify-between">
+                <div>
+                    <p class="text-xs font-medium uppercase tracking-wider text-slate-500">Total Curah Hujan (Kumulatif)</p>
+                    <h3 id="kpiTotalRain" class="text-2xl font-bold text-slate-900 mt-2">0 mm</h3>
+                </div>
+                <div class="mt-4 flex items-center text-xs text-emerald-600 font-medium">
+                    <span>▲ Akumulasi seluruh periode terpilih</span>
+                </div>
+            </div>
+            <!-- KPI 2 -->
+            <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 flex flex-col justify-between">
+                <div>
+                    <p class="text-xs font-medium uppercase tracking-wider text-slate-500">Rata-rata Bulanan</p>
+                    <h3 id="kpiAvgRain" class="text-2xl font-bold text-slate-900 mt-2">0 mm</h3>
+                </div>
+                <div class="mt-4 flex items-center text-xs text-blue-600 font-medium">
+                    <span>Rata-rata intensitas per bulan</span>
+                </div>
+            </div>
+            <!-- KPI 3 -->
+            <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 flex flex-col justify-between">
+                <div>
+                    <p class="text-xs font-medium uppercase tracking-wider text-slate-500">Curah Hujan Tertinggi (Puncak)</p>
+                    <h3 id="kpiMaxRain" class="text-2xl font-bold text-slate-900 mt-2">0 mm</h3>
+                </div>
+                <div id="kpiMaxLabel" class="mt-4 text-xs text-amber-600 font-medium">
+                    <span>Rekor catatan bulanan maksimum</span>
+                </div>
+            </div>
+            <!-- KPI 4 -->
+            <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 flex flex-col justify-between">
+                <div>
+                    <p class="text-xs font-medium uppercase tracking-wider text-slate-500">Bulan Basah Dominan</p>
+                    <h3 id="kpiWetMonth" class="text-2xl font-bold text-slate-900 mt-2">-</h3>
+                </div>
+                <div class="mt-4 text-xs text-slate-500 font-medium">
+                    <span>Periode dengan curah hujan tertinggi</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Grid Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Chart 1: Tren Curah Hujan Bulanan -->
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-base font-bold text-slate-900">Tren Curah Hujan Bulanan</h3>
+                    <span class="text-xs text-slate-400 bg-slate-100 px-2.5 py-1 rounded">Milimeter (mm)</span>
+                </div>
+                <div class="relative h-80">
+                    <canvas id="trendChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Chart 2: Perbandingan Curah Hujan Antar Tahun -->
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-base font-bold text-slate-900">Distribusi Curah Hujan Berdasarkan Bulan</h3>
+                    <span class="text-xs text-slate-400 bg-slate-100 px-2.5 py-1 rounded">Pola Musiman</span>
+                </div>
+                <div class="relative h-80">
+                    <canvas id="monthlyAvgChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Actionable Business Insights Panel -->
+        <div class="bg-gradient-to-br from-slate-900 to-slate-800 text-white p-6 sm:p-8 rounded-2xl shadow-lg border border-slate-700">
+            <div class="flex items-center gap-3 mb-6">
+                <div class="bg-cyan-500 p-2 rounded-lg text-slate-900 font-bold">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold">Panel Wawasan & Rekomendasi Eksekutif</h3>
+                    <p class="text-xs text-slate-400">Temuan analitik otomatis berdasarkan dataset curah hujan Toraja Utara</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Insight 1 -->
+                <div class="bg-slate-800/80 p-5 rounded-xl border border-slate-700 flex flex-col justify-between">
+                    <div>
+                        <span class="text-xs font-semibold text-cyan-400 uppercase tracking-wider">Pola Musim Basah (Wet Season)</span>
+                        <h4 class="font-semibold text-white mt-1 text-base">Puncak Curah Hujan di Bulan Maret & April</h4>
+                        <p class="text-slate-300 text-xs mt-2 leading-relaxed">
+                            Data historis menunjukkan eskalasi curah hujan tertinggi secara konsisten terjadi pada bulan Maret hingga April (sering melampaui 400-600 mm).
+                        </p>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-slate-700/60 text-xs text-cyan-300 font-medium">
+                        → Rekomendasi: Perketat siaga longsor dan perbaikan drainase pada Q1-Q2.
+                    </div>
+                </div>
+
+                <!-- Insight 2 -->
+                <div class="bg-slate-800/80 p-5 rounded-xl border border-slate-700 flex flex-col justify-between">
+                    <div>
+                        <span class="text-xs font-semibold text-amber-400 uppercase tracking-wider">Periode Transisi / Kemarau</span>
+                        <h4 class="font-semibold text-white mt-1 text-base">Penurunan Signifikan di Juli – September</h4>
+                        <p class="text-slate-300 text-xs mt-2 leading-relaxed">
+                            Intensitas hujan menurun drastis pada pertengahan tahun, yang berpotensi memicu kekeringan ringan atau penurunan debit air bersih di beberapa wilayah.
+                        </p>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-slate-700/60 text-xs text-amber-300 font-medium">
+                        → Rekomendasi: Optimalisasi konservasi air dan waduk penampung.
+                    </div>
+                </div>
+
+                <!-- Insight 3 -->
+                <div class="bg-slate-800/80 p-5 rounded-xl border border-slate-700 flex flex-col justify-between">
+                    <div>
+                        <span class="text-xs font-semibold text-emerald-400 uppercase tracking-wider">Mitigasi & Pertanian</span>
+                        <h4 class="font-semibold text-white mt-1 text-base">Sinkronisasi Kalender Tanam</h4>
+                        <p class="text-slate-300 text-xs mt-2 leading-relaxed">
+                            Fluktuasi tahunan menuntut adaptasi petani lokal dalam menentukan waktu masa tanam padi dan hortikultura agar terhindar dari erosi tanah ekstrem.
+                        </p>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-slate-700/60 text-xs text-emerald-300 font-medium">
+                        → Rekomendasi: Integrasikan data iklim dengan program penyuluhan tani.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-slate-900 text-slate-400 py-6 border-t border-slate-800 mt-12">
+        <div class="max-w-7xl mx-auto px-4 text-center text-xs">
+            <p>Executive Business Intelligence Dashboard &copy; 2026 — Kabupaten Toraja Utara. Dirancang untuk Manajemen Senior & Pengambil Kebijakan.</p>
+        </div>
+    </footer>
+
+    <!-- JavaScript Logic & Embedded Dataset -->
+    <script>
+        // Raw Dataset embedded directly from curah hujan toraja utara.xlsx
+        const rawData = [
+            { bulan: "Januari", 2015: 239.5, 2016: 239.5, 2017: 102.0, 2018: 189.5, 2019: 180.5, 2020: 319.8, 2021: 404.1, 2022: 206.0, 2023: 148.6, 2024: 428.8, 2025: 274.4 },
+            { bulan: "Februari", 2015: 331.0, 2016: 331.0, 2017: 168.0, 2018: 241.8, 2019: 310.3, 2020: 482.3, 2021: 235.3, 2022: 254.6, 2023: 121.8, 2024: 438.9, 2025: 225.9 },
+            { bulan: "Maret", 2015: 319.3, 2016: 319.3, 2017: 148.0, 2018: 316.9, 2019: 310.1, 2020: 462.7, 2021: 502.8, 2022: 273.3, 2023: 414.8, 2024: 326.1, 2025: 241.2 },
+            { bulan: "April", 2015: 598.5, 2016: 598.5, 2017: 188.0, 2018: 253.4, 2019: 398.2, 2020: 669.9, 2021: 262.3, 2022: 394.5, 2023: 364.9, 2024: 641.0, 2025: 379.2 },
+            { bulan: "Mei", 2015: 219.3, 2016: 219.3, 2017: 134.0, 2018: 168.0, 2019: 132.1, 2020: 370.4, 2021: 247.2, 2022: 281.1, 2023: 213.3, 2024: 250.8, 2025: 262.7 },
+            { bulan: "Juni", 2015: 148.0, 2016: 148.0, 2017: 116.0, 2018: 312.8, 2019: 230.6, 2020: 220.3, 2021: 73.3, 2022: 158.5, 2023: 154.3, 2024: 114.1, 2025: 262.6 },
+            { bulan: "Juli", 2015: 22.0, 2016: 22.0, 2017: 69.0, 2018: 86.7, 2019: 15.8, 2020: 161.5, 2021: 150.1, 2022: 165.2, 2023: 75.9, 2024: 158.0, 2025: 65.2 },
+            { bulan: "Agustus", 2015: 20.6, 2016: 20.6, 2017: 52.0, 2018: 123.0, 2019: 17.2, 2020: 106.3, 2021: 161.7, 2022: 248.4, 2023: 41.3, 2024: 71.8, 2025: 105.0 },
+            { bulan: "September", 2015: 0.8, 2016: 0.8, 2017: 33.0, 2018: 22.8, 2019: 9.3, 2020: 125.1, 2021: 220.5, 2022: 103.8, 2023: 18.4, 2024: 63.8, 2025: 92.1 },
+            { bulan: "Oktober", 2015: 21.0, 2016: 21.0, 2017: 42.0, 2018: 40.2, 2019: 54.6, 2020: 456.9, 2021: 202.8, 2022: 230.6, 2023: 36.9, 2024: 85.4, 2025: 361.1 },
+            { bulan: "November", 2015: 188.1, 2016: 188.1, 2017: 65.0, 2018: 233.8, 2019: 128.5, 2020: 226.1, 2021: 629.3, 2022: 343.2, 2023: 137.7, 2024: 295.2, 2025: 146.8 },
+            { bulan: "Desember", 2015: 385.5, 2016: 385.5, 2017: 134.0, 2018: 346.4, 2019: 206.4, 2020: 134.4, 2021: 108.9, 2022: 352.4, 2023: 307.3, 2024: 183.1, 2025: 257.1 }
+        ];
+
+        const yearsList = [2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025];
+        let trendChartInstance = null;
+        let monthlyChartInstance = null;
+
+        // Initialize Dashboard on Load
+        document.addEventListener("DOMContentLoaded", () => {
+            updateDashboard();
+        });
+
+        function resetFilters() {
+            document.getElementById('yearFilter').value = "ALL";
+            updateDashboard();
+        }
+
+        function updateDashboard() {
+            const selectedYear = document.getElementById('yearFilter').value;
+
+            let labels = [];
+            let dataValues = [];
+            let totalRain = 0;
+            let maxRain = -1;
+            let maxRainInfo = "";
+            let monthlySums = new Array(12).fill(0);
+            let monthlyCounts = new Array(12).fill(0);
+
+            if (selectedYear === "ALL") {
+                // Aggregate yearly totals for trend chart
+                labels = yearsList.map(String);
+                dataValues = yearsList.map(y => {
+                    let sum = rawData.reduce((acc, row) => acc + row[y], 0);
+                    totalRain += sum;
+                    return parseFloat(sum.toFixed(1));
+                });
+
+                // Calculate monthly averages across all years for monthly chart
+                rawData.forEach((row, idx) => {
+                    let mSum = 0;
+                    yearsList.forEach(y => {
+                        mSum += row[y];
+                        if (row[y] > maxRain) {
+                            maxRain = row[y];
+                            maxRainInfo = `${row.bulan} ${y}`;
+                        }
+                    });
+                    monthlySums[idx] = mSum / yearsList.length;
+                });
+            } else {
+                // Specific year selected
+                const y = parseInt(selectedYear);
+                labels = rawData.map(r => r.bulan);
+                dataValues = rawData.map(r => {
+                    let val = r[y];
+                    totalRain += val;
+                    if (val > maxRain) {
+                        maxRain = val;
+                        maxRainInfo = `${r.bulan} ${y}`;
+                    }
+                    return val;
+                });
+                monthlySums = dataValues;
+            }
+
+            const avgRain = totalRain / (selectedYear === "ALL" ? (12 * yearsList.length) : 12);
+
+            // Find wettest month name
+            let maxMonthIdx = monthlySums.indexOf(Math.max(...monthlySums));
+            let wettestMonthName = rawData[maxMonthIdx].bulan;
+
+            // Update KPI DOM elements
+            document.getElementById('kpiTotalRain').innerText = totalRain.toLocaleString('id-ID', {maximumFractionDigits: 1}) + " mm";
+            document.getElementById('kpiAvgRain').innerText = avgRain.toLocaleString('id-ID', {maximumFractionDigits: 1}) + " mm";
+            document.getElementById('kpiMaxRain').innerText = maxRain.toLocaleString('id-ID', {maximumFractionDigits: 1}) + " mm";
+            document.getElementById('kpiMaxLabel').innerHTML = `<span>Rekor tertinggi pada ${maxRainInfo}</span>`;
+            document.getElementById('kpiWetMonth').innerText = wettestMonthName;
+
+            // Render Charts
+            renderTrendChart(labels, dataValues, selectedYear === "ALL" ? "Total Curah Hujan per Tahun (mm)" : `Curah Hujan Tahun ${selectedYear} (mm)`);
+            renderMonthlyChart(rawData.map(r => r.bulan), monthlySums, selectedYear === "ALL" ? "Rata-rata Curah Hujan Bulanan (2015-2025)" : `Curah Hujan Bulanan ${selectedYear}`);
+        }
+
+        function renderTrendChart(labels, data, labelTitle) {
+            const ctx = document.getElementById('trendChart').getContext('2d');
+            if (trendChartInstance) trendChartInstance.destroy();
+
+            trendChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: labelTitle,
+                        data: data,
+                        backgroundColor: 'rgba(14, 116, 144, 0.8)',
+                        borderColor: 'rgb(14, 116, 144)',
+                        borderWidth: 1,
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return ` Curah Hujan: ${context.parsed.y.toLocaleString('id-ID')} mm`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: 'rgba(226, 232, 240, 0.6)' }
+                        },
+                        x: {
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderMonthlyChart(labels, data, labelTitle) {
+            const ctx = document.getElementById('monthlyAvgChart').getContext('2d');
+            if (monthlyChartInstance) monthlyChartInstance.destroy();
+
+            monthlyChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: labelTitle,
+                        data: data,
+                        borderColor: 'rgb(6, 182, 212)',
+                        backgroundColor: 'rgba(6, 182, 212, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.3,
+                        pointBackgroundColor: 'rgb(14, 116, 144)',
+                        pointRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return ` Curah Hujan: ${context.parsed.y.toLocaleString('id-ID', {maximumFractionDigits: 1})} mm`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: 'rgba(226, 232, 240, 0.6)' }
+                        },
+                        x: {
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
